@@ -268,7 +268,6 @@ int main(const int argc, const char** argv)
     size_t failed = 0;
     {
         std::vector<std::string> treeFiles = { "scripts/research/research_tree.rt","scripts/research/research_tree_prologue.rt", "scripts/research/research_tree_survival.rt" };
-        //std::vector<std::string> treeFiles = { "scripts/research/research_tree_survival.rt" };
         auto researchRules = getResearchMergeRules();
         for (const std::string researchFile : treeFiles) {
             ++files;
@@ -281,7 +280,6 @@ int main(const int argc, const char** argv)
 
     {
         std::vector<std::string> treeFiles = { "scripts/blueprint_tables/weapon_stats.dat" };
-        //std::vector<std::string> treeFiles = { "scripts/research/research_tree_survival.rt" };
         auto researchRules = getWeaponStatsMergeRules();
         for (const std::string researchFile : treeFiles) {
             ++files;
