@@ -10,7 +10,9 @@ It will attempt to merge modded versions of the files:
 - "scripts/research/research_tree_survival.rt"
 - "scripts/blueprint_tables/weapon_stats.dat"
 
-by recursively adding new and updating existing values. The results are packed into "zzz_ResearchMerge.zip".  
+by recursively adding new and updating existing values, so the load-order still matters.
+It is currently not possible to remove values.
+The results are packed into "zzz_ResearchMerge.zip".  
 
 ## For Mod Authors
 
