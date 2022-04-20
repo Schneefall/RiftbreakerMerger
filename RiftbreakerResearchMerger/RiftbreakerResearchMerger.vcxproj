@@ -150,6 +150,7 @@
     <ClCompile Include="RBNodeValue.cpp" />
     <ClCompile Include="RiftbreakerResearchMerger.cpp" />
     <ClCompile Include="parser_utils.cpp" />
+    <ClCompile Include="RBMergeRules.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Argparse.h" />

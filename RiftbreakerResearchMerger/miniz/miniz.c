@@ -3643,6 +3643,10 @@ static mz_bool mz_zip_reader_read_central_dir(mz_zip_archive *pZip, mz_uint flag
         cdir_disk_index = MZ_READ_LE32(pZip64_end_of_central_dir + MZ_ZIP64_ECDH_NUM_DISK_CDIR_OFS);
 
         cdir_ofs = MZ_READ_LE64(pZip64_end_of_central_dir + MZ_ZIP64_ECDH_CDIR_OFS_OFS);
+        //printf("Is zip64\n");
+    }
+    else {
+        //printf("Is NOT zip64\n");
     }
 
     if (pZip->m_total_files != cdir_entries_on_this_disk)
@@ -3658,34 +3662,43 @@ static mz_bool mz_zip_reader_read_central_dir(mz_zip_archive *pZip, mz_uint flag
         return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
 
     pZip->m_central_directory_file_ofs = cdir_ofs;
-
+    //printf("Pos: total-files %d\n", pZip->m_total_files);
     if (pZip->m_total_files)
     {
         mz_uint i, n;
         /* Read the entire central directory into a heap block, and allocate another heap block to hold the unsorted central dir file record offsets, and possibly another to hold the sorted indices. */
         if ((!mz_zip_array_resize(pZip, &pZip->m_pState->m_central_dir, cdir_size, MZ_FALSE)) ||
-            (!mz_zip_array_resize(pZip, &pZip->m_pState->m_central_dir_offsets, pZip->m_total_files, MZ_FALSE)))
+            (!mz_zip_array_resize(pZip, &pZip->m_pState->m_central_dir_offsets, pZip->m_total_files, MZ_FALSE))) {
+            //printf("Pos: error alloc 1\n");
             return mz_zip_set_error(pZip, MZ_ZIP_ALLOC_FAILED);
+        }
 
         if (sort_central_dir)
         {
-            if (!mz_zip_array_resize(pZip, &pZip->m_pState->m_sorted_central_dir_offsets, pZip->m_total_files, MZ_FALSE))
+            if (!mz_zip_array_resize(pZip, &pZip->m_pState->m_sorted_central_dir_offsets, pZip->m_total_files, MZ_FALSE)) {
+                //printf("Pos: error alloc 2\n");
                 return mz_zip_set_error(pZip, MZ_ZIP_ALLOC_FAILED);
+            }
         }
 
-        if (pZip->m_pRead(pZip->m_pIO_opaque, cdir_ofs, pZip->m_pState->m_central_dir.m_p, cdir_size) != cdir_size)
+        if (pZip->m_pRead(pZip->m_pIO_opaque, cdir_ofs, pZip->m_pState->m_central_dir.m_p, cdir_size) != cdir_size) {
+            //printf("Pos: error read 1\n");
             return mz_zip_set_error(pZip, MZ_ZIP_FILE_READ_FAILED);
+        }
 
         /* Now create an index into the central directory file records, do some basic sanity checking on each record */
         p = (const mz_uint8 *)pZip->m_pState->m_central_dir.m_p;
+        //printf("Pos: iter files\n");
         for (n = cdir_size, i = 0; i < pZip->m_total_files; ++i)
         {
             mz_uint total_header_size, disk_index, bit_flags, filename_size, ext_data_size;
             mz_uint64 comp_size, decomp_size, local_header_ofs;
 
-            if ((n < MZ_ZIP_CENTRAL_DIR_HEADER_SIZE) || (MZ_READ_LE32(p) != MZ_ZIP_CENTRAL_DIR_HEADER_SIG))
+            if ((n < MZ_ZIP_CENTRAL_DIR_HEADER_SIZE) || (MZ_READ_LE32(p) != MZ_ZIP_CENTRAL_DIR_HEADER_SIG)) {
+                //printf("Pos: error header\n");
                 return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
-
+            }
+            
             MZ_ZIP_ARRAY_ELEMENT(&pZip->m_pState->m_central_dir_offsets, mz_uint32, i) = (mz_uint32)(p - (const mz_uint8 *)pZip->m_pState->m_central_dir.m_p);
 
             if (sort_central_dir)
@@ -3736,18 +3749,20 @@ static mz_bool mz_zip_reader_read_central_dir(mz_zip_archive *pZip, mz_uint flag
 						if (extra_size_remaining < (sizeof(mz_uint16) * 2))
 						{
 							MZ_FREE(buf);
+                            //printf("Pos: error data 1\n");
 							return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
 						}
-
+                        
                         field_id = MZ_READ_LE16(pExtra_data);
                         field_data_size = MZ_READ_LE16(pExtra_data + sizeof(mz_uint16));
 
 						if ((field_data_size + sizeof(mz_uint16) * 2) > extra_size_remaining)
 						{
 							MZ_FREE(buf);
+                            //printf("Pos: error data 2\n");
 							return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
 						}
-
+                        
                         if (field_id == MZ_ZIP64_EXTENDED_INFORMATION_FIELD_HEADER_ID)
                         {
                             /* Ok, the archive didn't have any zip64 headers but it uses a zip64 extended information field so mark it as zip64 anyway (this can occur with infozip's zip util when it reads compresses files from stdin). */
@@ -3763,12 +3778,14 @@ static mz_bool mz_zip_reader_read_central_dir(mz_zip_archive *pZip, mz_uint flag
 					MZ_FREE(buf);
                 }
             }
-
+            //printf("Pos: error handling file %d\n", i);
             /* I've seen archives that aren't marked as zip64 that uses zip64 ext data, argh */
             if ((comp_size != MZ_UINT32_MAX) && (decomp_size != MZ_UINT32_MAX))
             {
-                if (((!MZ_READ_LE32(p + MZ_ZIP_CDH_METHOD_OFS)) && (decomp_size != comp_size)) || (decomp_size && !comp_size))
+                if (((!MZ_READ_LE32(p + MZ_ZIP_CDH_METHOD_OFS)) && (decomp_size != comp_size)) || (decomp_size && !comp_size)) {
+                    //printf("Pos: error handling 1 file %d\n", i);
                     return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
+                }
             }
 
             disk_index = MZ_READ_LE16(p + MZ_ZIP_CDH_DISK_START_OFS);
@@ -3777,25 +3794,31 @@ static mz_bool mz_zip_reader_read_central_dir(mz_zip_archive *pZip, mz_uint flag
 
             if (comp_size != MZ_UINT32_MAX)
             {
-                if (((mz_uint64)MZ_READ_LE32(p + MZ_ZIP_CDH_LOCAL_HEADER_OFS) + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + comp_size) > pZip->m_archive_size)
-                    return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
+                if (((mz_uint64)MZ_READ_LE32(p + MZ_ZIP_CDH_LOCAL_HEADER_OFS) + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + comp_size) > pZip->m_archive_size) {
+                    //printf("Pos: error handling 2 file %d\n", i);
+                    //printf("SUPPRESSING\n");
+                    //return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
+                }
             }
 
             bit_flags = MZ_READ_LE16(p + MZ_ZIP_CDH_BIT_FLAG_OFS);
             if (bit_flags & MZ_ZIP_GENERAL_PURPOSE_BIT_FLAG_LOCAL_DIR_IS_MASKED)
                 return mz_zip_set_error(pZip, MZ_ZIP_UNSUPPORTED_ENCRYPTION);
 
-            if ((total_header_size = MZ_ZIP_CENTRAL_DIR_HEADER_SIZE + MZ_READ_LE16(p + MZ_ZIP_CDH_FILENAME_LEN_OFS) + MZ_READ_LE16(p + MZ_ZIP_CDH_EXTRA_LEN_OFS) + MZ_READ_LE16(p + MZ_ZIP_CDH_COMMENT_LEN_OFS)) > n)
+            if ((total_header_size = MZ_ZIP_CENTRAL_DIR_HEADER_SIZE + MZ_READ_LE16(p + MZ_ZIP_CDH_FILENAME_LEN_OFS) + MZ_READ_LE16(p + MZ_ZIP_CDH_EXTRA_LEN_OFS) + MZ_READ_LE16(p + MZ_ZIP_CDH_COMMENT_LEN_OFS)) > n) {
+                //printf("Pos: error handling 3 file %d\n", i);
                 return mz_zip_set_error(pZip, MZ_ZIP_INVALID_HEADER_OR_CORRUPTED);
+            }
 
             n -= total_header_size;
             p += total_header_size;
         }
+        //printf("Pos: end iter\n");
     }
 
     if (sort_central_dir)
         mz_zip_reader_sort_central_dir_offsets_by_filename(pZip);
-
+    //printf("Pos: end read dir\n");
     return MZ_TRUE;
 }
 

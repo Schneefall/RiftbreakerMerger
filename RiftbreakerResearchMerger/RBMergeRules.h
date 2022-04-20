@@ -1,5 +1,8 @@
 #pragma once
-
+#include <memory>
+#include <map>
+#include <vector>
+#include <string>
 
 enum class RBMergeType {
 	RBMERGE_DICT = 0,
@@ -21,13 +24,13 @@ enum class RBMergeRuleShared {
 
 class RBMergeRule {
 public:
-	RBMergeRule(std::string name, RBMergeType mergeType, std::string mergeKey, RBMergeRuleNew ruleNew, RBMergeRuleRemoved ruleRemoved, RBMergeRuleShared ruleShared)
-		: name(name), mergeType(mergeType), mergeKey(mergeKey), ruleNew(ruleNew), ruleRemoved(ruleRemoved), ruleShared(ruleShared) {}
+	RBMergeRule(std::string name, RBMergeType mergeType, std::string listKey, RBMergeRuleNew ruleNew, RBMergeRuleRemoved ruleRemoved, RBMergeRuleShared ruleShared)
+		: name(name), mergeType(mergeType), listKey(listKey), ruleNew(ruleNew), ruleRemoved(ruleRemoved), ruleShared(ruleShared) {}
 
 	std::string name;
 
 	RBMergeType mergeType;
-	std::string mergeKey;
+	std::string listKey;
 
 	RBMergeRuleNew ruleNew;
 	RBMergeRuleRemoved ruleRemoved;
@@ -43,3 +46,5 @@ private:
 	std::map<std::string, std::shared_ptr<RBMergeRule>> m_rules;
 	const std::shared_ptr<RBMergeRule> m_defaultRule;
 };
+
+std::vector<std::pair<std::vector<std::string>, std::shared_ptr<RBMergeRules>>> getKnownMergeFilesRules();

@@ -36,6 +36,9 @@
     <ClCompile Include="RBNodeValue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RBMergeRules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="miniz\miniz.h">

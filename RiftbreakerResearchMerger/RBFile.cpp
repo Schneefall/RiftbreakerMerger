@@ -11,35 +11,18 @@ int index(std::vector<T> & v , T & e ) {
 	return -1;
 }
 
-template<>
-inline std::shared_ptr<RBNodeEmpty> RBFile::AsType(std::shared_ptr<RBNode> node)
+RBFile::RBFile(std::shared_ptr<RBNodeList> root)
 {
-	if (node->GetType() == RBNodeType::RBNODE_EMPTY) {
-		return std::static_pointer_cast<RBNodeEmpty>(node);
+	if (root->GetName().compare("ROOT") != 0) {
+		throw std::runtime_error("RBFile root node must be called 'ROOT'.");
 	}
-	else {
-		throw std::runtime_error("Can't convert to empty node.");
-	}
+	m_root = root;
 }
-template<>
-inline std::shared_ptr<RBNodeList> RBFile::AsType(std::shared_ptr<RBNode> node)
+
+std::shared_ptr<RBFile> RBFile::Copy()
 {
-	if (node->GetType() == RBNodeType::RBNODE_LIST) {
-		return std::static_pointer_cast<RBNodeList>(node);
-	}
-	else {
-		throw std::runtime_error("Can't convert to list node.");
-	}
-}
-template<>
-inline std::shared_ptr<RBNodeValue> RBFile::AsType(std::shared_ptr<RBNode> node)
-{
-	if (node->GetType() == RBNodeType::RBNODE_VALUE) {
-		return std::static_pointer_cast<RBNodeValue>(node);
-	}
-	else {
-		throw std::runtime_error("Can't convert to value node.");
-	}
+	std::shared_ptr<RBNodeList> root = std::static_pointer_cast<RBNodeList>(m_root->Copy());
+	return std::make_shared<RBFile>(root);
 }
 
 void RBFile::Merge(std::shared_ptr<RBFile> other, std::shared_ptr<RBMergeRules> rules)
@@ -52,6 +35,11 @@ void RBFile::Serialize(std::ostream& out)
 	for (const auto& node : m_root->GetNodes()) {
 		node->Serialize(out, 0);
 	}
+}
+
+void RBFile::RemoveEqual(std::shared_ptr<RBFile> other, std::shared_ptr<RBMergeRules> rules)
+{
+	m_root->RemoveEqual(other->m_root, rules);
 }
 
 void RBFile::Parse(std::istream& in)

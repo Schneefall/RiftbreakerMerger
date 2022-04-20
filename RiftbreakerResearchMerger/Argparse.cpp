@@ -28,6 +28,15 @@ Argparse::Argparse(const int argc, const char** argv)
 		else if (arg.compare("-position") == 0) {
 			m_args["position"] = std::string("true");
 		}
+		else if (arg.compare("-makepatch") == 0) {
+			if (i == argc - 1) {
+				throw std::runtime_error("-makepatch requires a value.");
+			}
+			m_args["makepatch"] = std::string(argv[++i]);
+		}
+		else if (arg.compare("-v") == 0) {
+			m_args["verbose"] = std::string("true");
+		}
 		else {
 			std::stringstream ss;
 			ss << "Unknown argument " << arg;
@@ -68,4 +77,6 @@ void Argparse::SetDefaults()
 	m_args[std::string("rtpath")] = std::string("scripts/research");
 	m_args[std::string("outname")] = std::string("zzz_ResearchMerge.zip");
 	m_args[std::string("position")] = std::string("false");
+	m_args[std::string("verbose")] = std::string("false");
+	m_args[std::string("makepatch")] = std::string("");
 }
