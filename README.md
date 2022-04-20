@@ -11,6 +11,8 @@ It will attempt to merge modded versions of the files:
 - "scripts/blueprint_tables/weapon_stats.dat"
 
 by recursively adding new and updating existing values, so the load-order still matters.
+The merging will only consider values in modded files that are different from the base game, to prevent mods overwriting each other with default values.
+This behavior is disabled if the mod provides a .merge version of the file, so it is still possible to intentionally forward base game values.
 It is currently not possible to remove values.
 The results are packed into "zzz_ResearchMerge.zip".  
 
@@ -18,7 +20,8 @@ The results are packed into "zzz_ResearchMerge.zip".
 
 Mod authors can provide a .merge file, e.g. "scripts/research/research_tree.rt.merge", containing only the intended changed for increased compatibility. If a .merge file is available the base file in the same archive will be ignored, meaning you can also provide a version of the mod that does not need to be merged.
 Some list stuctures (like `ResearchNode`s in `nodes`) require that a key is present (`research_name` for `ResearchNode`, `category` for `ResearchTree`).  
-So a minimal file that adds my [Bioscanner Drones](https://www.nexusmods.com/theriftbreaker/mods/169) as reward to the Alien Research node would look like this:
+A minimal file that forwards only the mods changes can be automatically created by running the too with the -makepatch <your-modpack> argument. The new .merge file will be placed inside the mod pack.  
+Such a minimal file that adds my [Bioscanner Drones](https://www.nexusmods.com/theriftbreaker/mods/169) as reward to the Alien Research node would look like this:
 ```
 Research
 {
